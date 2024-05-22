@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@^3.0/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .input-field {
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded-xl shadow-xl max-w-md w-full">
+        <h2 class="text-3xl font-light text-center text-indigo-600 mb-4">Inscription</h2>
+        <form id="registrationForm" class="space-y-4">
+            <input type="email" id="email" placeholder="Email" class="input-field w-full p-2 border border-gray-300 rounded">
+            <input type="text" id="username" placeholder="Username" class="input-field w-full p-2 border border-gray-300 rounded">
+            <input type="password" id="password" placeholder="Password" class="input-field w-full p-2 border border-gray-300 rounded">
+            <button type="submit"
+                class="w-full h-12 text-xl bg-indigo-500 hover:bg-indigo-700 text-white rounded-md">Créer un compte</button>
+        </form>
+        <p class="mt-4 text-center text-sm">
+            Vous possédez déjà un compte? <a href="/userauth" class="text-indigo-600 hover:underline">Connectez-vous</a>
+        </p>
+    </div>
+
+    <script>
+        document.getElementById('registrationForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            const email = document.getElementById('email').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            fetch('/api/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, username, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Inscription réussie:', data);
+                alert('Inscription réussie! Vous serez redirigé.');
+                // Redirect user or handle next steps
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Une erreur est survenue lors de l\'inscription.');
+            });
+        });
+    </script>
+</body>
+</html>
