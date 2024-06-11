@@ -12,16 +12,7 @@ class Instrument(models.Model):
         ('woodwind', 'Woodwind'),
         ('vocal', 'Vocal')
     ], key=lambda choice: choice[1])
-    INSTRUMENT_CHOICES = sorted([
-        ('All Instruments', 'All Instruments'),
-        ('Bass', 'Bass'),
-        ('Guitars', 'Guitar'),
-        ('Drums', 'Drums'),
-        ('Vocals', 'Vocals'),
-        ('Synthesizer', 'Synthesizer'),
-        ('Programming', 'Programming'),
-        ('Violin', 'Violin'),
-    ])
+
     instrument_name = models.CharField(max_length=100, unique=True)
     instrument_description = models.TextField(blank=True, null=True)
     instrument_category = models.CharField(max_length=50, choices=INSTRUMENT_CATEGORY, blank=True, null=True)

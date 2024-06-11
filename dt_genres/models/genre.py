@@ -7,4 +7,4 @@ class Genre(models.Model):
     genre_photo = models.ImageField(upload_to='genre_photos/', blank=True, null=True)
 
     def __str__(self):
-        return self.name
+        return self.genre_name
