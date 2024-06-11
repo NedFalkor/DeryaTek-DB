@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instrument Management</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs" defer></script>
+</head>
+<body>
+    <div class="container" x-data="instrumentApp()" x-init="init()">
+        <!-- Liste des instruments -->
+        <template x-if="showList">
+            <div>
+                <h1>Instruments List</h1>
+                <ul>
+                    <template x-for="instrument in instruments" :key="instrument.id">
+                        <li @click="selectInstrument(instrument)">
+                            <strong x-text="instrument.instrument_name"></strong>
+                        </li>
+                    </template>
+                </ul>
+                <button @click="showCreateForm()">Add New Instrument</button>
+            </div>
+        </template>
+
+        <!-- Détails de l'instrument -->
+        <template x-if="showDetail">
+            <div>
+                <button @click="goBack()">Back to List</button>
+                <h1 x-text="selectedInstrument.instrument_name"></h1>
+                <p>Description: <span x-text="selectedInstrument.instrument_description"></span></p>
+                <p>Category: <span x-text="selectedInstrument.instrument_category"></span></p>
+            </div>
+        </template>
+
+        <!-- Formulaire de création d'un nouvel instrument -->
+        <template x-if="showCreate">
+            <div>
+                <h1>Create New Instrument</h1>
+                <form @submit.prevent="createInstrument">
+                    <div>
+                        <label for="name">Name</label>
+                        <input type="text" id="name" x-model="newInstrument.instrument_name">
+                    </div>
+                    <div>
+                        <label for="description">Description</label>
+                        <textarea id="description" x-model="newInstrument.instrument_description"></textarea>
+                    </div>
+                    <div>
+                        <label for="category">Category</label>
+                        <select id="category" x-model="newInstrument.instrument_category">
+                            <option value="wind">Wind</option>
+                            <option value="strings">Strings</option>
+                            <option value="percussion">Percussion</option>
+                            <option value="electronic">Electronic</option>
+                            <option value="keyboard">Keyboard</option>
+                            <option value="brass">Brass</option>
+                            <option value="woodwind">Woodwind</option>
+                            <option value="vocal">Vocal</option>
+                        </select>
+                    </div>
+                    <button type="submit">Create</button>
+                </form>
+                <button @click="goBack()">Cancel</button>
+            </div>
+        </template>
+    </div>
+
+    <script>
+        function instrumentApp() {
+            return {
+                instruments: [],
+                selectedInstrument: null,
+                showList: true,
+                showDetail: false,
+                showCreate: false,
+                newInstrument: {
+                    instrument_name: '',
+                    instrument_description: '',
+                    instrument_category: ''
+                },
+                fetchInstruments() {
+                    fetch('/api/instruments/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.instruments = data;
+                        });
+                },
+                selectInstrument(instrument) {
+                    this.selectedInstrument = instrument;
+                    this.showList = false;
+                    this.showDetail = true;
+                },
+                goBack() {
+                    this.showDetail = false;
+                    this.showCreate = false;
+                    this.showList = true;
+                },
+                showCreateForm() {
+                    this.showCreate = true;
+                    this.showList = false;
+                },
+                createInstrument() {
+                    fetch('/api/instruments/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(this.newInstrument)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        this.instruments.push(data);
+                        this.goBack();
+                    });
+                },
+                init() {
+                    this.fetchInstruments();
+                }
+            }
+        }
+    </script>
+</body>
+</html>

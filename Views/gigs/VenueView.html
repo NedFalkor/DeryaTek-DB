@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Venue Management</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs" defer></script>
+</head>
+<body>
+    <div class="container" x-data="venueApp()" x-init="init()">
+        <!-- Liste des lieux -->
+        <template x-if="showList">
+            <div>
+                <h1>Venues List</h1>
+                <ul>
+                    <template x-for="venue in venues" :key="venue.id">
+                        <li @click="selectVenue(venue)">
+                            <strong x-text="venue.name"></strong> (<span x-text="venue.city"></span>, <span x-text="venue.country"></span>)
+                        </li>
+                    </template>
+                </ul>
+                <button @click="showCreateForm()">Add New Venue</button>
+            </div>
+        </template>
+
+        <!-- Détails du lieu -->
+        <template x-if="showDetail">
+            <div>
+                <button @click="goBack()">Back to List</button>
+                <h1 x-text="selectedVenue.name"></h1>
+                <p>Address: <span x-text="selectedVenue.address"></span></p>
+                <p>City: <span x-text="selectedVenue.city"></span></p>
+                <p>Country: <span x-text="selectedVenue.country"></span></p>
+                <p>Capacity: <span x-text="selectedVenue.capacity"></span></p>
+            </div>
+        </template>
+
+        <!-- Formulaire de création d'un nouveau lieu -->
+        <template x-if="showCreate">
+            <div>
+                <h1>Create New Venue</h1>
+                <form @submit.prevent="createVenue">
+                    <div>
+                        <label for="name">Name</label>
+                        <input type="text" id="name" x-model="newVenue.name">
+                    </div>
+                    <div>
+                        <label for="address">Address</label>
+                        <input type="text" id="address" x-model="newVenue.address">
+                    </div>
+                    <div>
+                        <label for="city">City</label>
+                        <input type="text" id="city" x-model="newVenue.city">
+                    </div>
+                    <div>
+                        <label for="country">Country</label>
+                        <input type="text" id="country" x-model="newVenue.country">
+                    </div>
+                    <div>
+                        <label for="capacity">Capacity</label>
+                        <input type="number" id="capacity" x-model="newVenue.capacity">
+                    </div>
+                    <button type="submit">Create</button>
+                </form>
+                <button @click="goBack()">Cancel</button>
+            </div>
+        </template>
+    </div>
+
+    <script>
+        function venueApp() {
+            return {
+                venues: [],
+                selectedVenue: null,
+                showList: true,
+                showDetail: false,
+                showCreate: false,
+                newVenue: {
+                    name: '',
+                    address: '',
+                    city: '',
+                    country: '',
+                    capacity: ''
+                },
+                fetchVenues() {
+                    fetch('/api/venues/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.venues = data;
+                        });
+                },
+                selectVenue(venue) {
+                    this.selectedVenue = venue;
+                    this.showList = false;
+                    this.showDetail = true;
+                },
+                goBack() {
+                    this.showDetail = false;
+                    this.showCreate = false;
+                    this.showList = true;
+                },
+                showCreateForm() {
+                    this.showCreate = true;
+                    this.showList = false;
+                },
+                createVenue() {
+                    const venueData = {
+                        name: this.newVenue.name,
+                        address: this.newVenue.address,
+                        city: this.newVenue.city,
+                        country: this.newVenue.country,
+                        capacity: this.newVenue.capacity
+                    };
+
+                    fetch('/api/venues/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(venueData)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        this.venues.push(data);
+                        this.goBack();
+                    });
+                },
+                init() {
+                    this.fetchVenues();
+                }
+            }
+        }
+    </script>
+</body>
+</html>

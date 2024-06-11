@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Style Management</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs" defer></script>
+</head>
+<body>
+    <div class="container" x-data="styleApp()" x-init="init()">
+        <!-- Liste des styles -->
+        <template x-if="showList">
+            <div>
+                <h1>Styles List</h1>
+                <ul>
+                    <template x-for="style in styles" :key="style.id">
+                        <li @click="selectStyle(style)">
+                            <strong x-text="style.style_name"></strong>
+                        </li>
+                    </template>
+                </ul>
+                <button @click="showCreateForm()">Add New Style</button>
+            </div>
+        </template>
+
+        <!-- Détails du style -->
+        <template x-if="showDetail">
+            <div>
+                <button @click="goBack()">Back to List</button>
+                <h1 x-text="selectedStyle.style_name"></h1>
+                <p>Description: <span x-text="selectedStyle.style_description"></span></p>
+                <p>Genres: <span x-text="selectedStyle.style_genres.map(g => g.genre_name).join(', ')"></span></p>
+                <img :src="selectedStyle.style_photo" alt="Style Photo" x-show="selectedStyle.style_photo">
+            </div>
+        </template>
+
+        <!-- Formulaire de création d'un nouveau style -->
+        <template x-if="showCreate">
+            <div>
+                <h1>Create New Style</h1>
+                <form @submit.prevent="createStyle">
+                    <div>
+                        <label for="name">Name</label>
+                        <input type="text" id="name" x-model="newStyle.style_name">
+                    </div>
+                    <div>
+                        <label for="description">Description</label>
+                        <textarea id="description" x-model="newStyle.style_description"></textarea>
+                    </div>
+                    <div>
+                        <label for="genres">Genres</label>
+                        <select id="genres" x-model="newStyle.style_genres" multiple>
+                            <template x-for="genre in genres" :key="genre.id">
+                                <option :value="genre.id" x-text="genre.genre_name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="photo">Photo</label>
+                        <input type="file" id="photo" @change="handleFileUpload">
+                    </div>
+                    <button type="submit">Create</button>
+                </form>
+                <button @click="goBack()">Cancel</button>
+            </div>
+        </template>
+    </div>
+
+    <script>
+        function styleApp() {
+            return {
+                styles: [],
+                genres: [],
+                selectedStyle: null,
+                showList: true,
+                showDetail: false,
+                showCreate: false,
+                newStyle: {
+                    style_name: '',
+                    style_description: '',
+                    style_genres: [],
+                    style_photo: null
+                },
+                fetchStyles() {
+                    fetch('/api/styles/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.styles = data;
+                        });
+                },
+                fetchGenres() {
+                    fetch('/api/genres/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.genres = data;
+                        });
+                },
+                selectStyle(style) {
+                    this.selectedStyle = style;
+                    this.showList = false;
+                    this.showDetail = true;
+                },
+                goBack() {
+                    this.showDetail = false;
+                    this.showCreate = false;
+                    this.showList = true;
+                },
+                showCreateForm() {
+                    this.showCreate = true;
+                    this.showList = false;
+                },
+                handleFileUpload(event) {
+                    this.newStyle.style_photo = event.target.files[0];
+                },
+                createStyle() {
+                    const formData = new FormData();
+                    formData.append('style_name', this.newStyle.style_name);
+                    formData.append('style_description', this.newStyle.style_description);
+                    this.newStyle.style_genres.forEach(genre => formData.append('style_genres', genre));
+                    if (this.newStyle.style_photo) {
+                        formData.append('style_photo', this.newStyle.style_photo);
+                    }
+
+                    fetch('/api/styles/', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        this.styles.push(data);
+                        this.goBack();
+                    });
+                },
+                init() {
+                    this.fetchStyles();
+                    this.fetchGenres();
+                }
+            }
+        }
+    </script>
+</body>
+</html>

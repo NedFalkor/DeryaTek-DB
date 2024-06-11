@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genre Management</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs" defer></script>
+</head>
+<body>
+    <div class="container" x-data="genreApp()" x-init="init()">
+        <!-- Liste des genres -->
+        <template x-if="showList">
+            <div>
+                <h1>Genres List</h1>
+                <ul>
+                    <template x-for="genre in genres" :key="genre.id">
+                        <li @click="selectGenre(genre)">
+                            <strong x-text="genre.genre_name"></strong>
+                        </li>
+                    </template>
+                </ul>
+                <button @click="showCreateForm()">Add New Genre</button>
+            </div>
+        </template>
+
+        <!-- Détails du genre -->
+        <template x-if="showDetail">
+            <div>
+                <button @click="goBack()">Back to List</button>
+                <h1 x-text="selectedGenre.genre_name"></h1>
+                <p>Description: <span x-text="selectedGenre.genre_description"></span></p>
+                <img :src="selectedGenre.genre_photo" alt="Genre Photo" x-show="selectedGenre.genre_photo">
+            </div>
+        </template>
+
+        <!-- Formulaire de création d'un nouveau genre -->
+        <template x-if="showCreate">
+            <div>
+                <h1>Create New Genre</h1>
+                <form @submit.prevent="createGenre">
+                    <div>
+                        <label for="name">Name</label>
+                        <input type="text" id="name" x-model="newGenre.genre_name">
+                    </div>
+                    <div>
+                        <label for="description">Description</label>
+                        <textarea id="description" x-model="newGenre.genre_description"></textarea>
+                    </div>
+                    <div>
+                        <label for="photo">Photo</label>
+                        <input type="file" id="photo" @change="handleFileUpload">
+                    </div>
+                    <button type="submit">Create</button>
+                </form>
+                <button @click="goBack()">Cancel</button>
+            </div>
+        </template>
+    </div>
+
+    <script>
+        function genreApp() {
+            return {
+                genres: [],
+                selectedGenre: null,
+                showList: true,
+                showDetail: false,
+                showCreate: false,
+                newGenre: {
+                    genre_name: '',
+                    genre_description: '',
+                    genre_photo: null
+                },
+                fetchGenres() {
+                    fetch('/api/genres/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.genres = data;
+                        });
+                },
+                selectGenre(genre) {
+                    this.selectedGenre = genre;
+                    this.showList = false;
+                    this.showDetail = true;
+                },
+                goBack() {
+                    this.showDetail = false;
+                    this.showCreate = false;
+                    this.showList = true;
+                },
+                showCreateForm() {
+                    this.showCreate = true;
+                    this.showList = false;
+                },
+                handleFileUpload(event) {
+                    this.newGenre.genre_photo = event.target.files[0];
+                },
+                createGenre() {
+                    const formData = new FormData();
+                    formData.append('genre_name', this.newGenre.genre_name);
+                    formData.append('genre_description', this.newGenre.genre_description);
+                    if (this.newGenre.genre_photo) {
+                        formData.append('genre_photo', this.newGenre.genre_photo);
+                    }
+
+                    fetch('/api/genres/', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        this.genres.push(data);
+                        this.goBack();
+                    });
+                },
+                init() {
+                    this.fetchGenres();
+                }
+            }
+        }
+    </script>
+</body>
+</html>

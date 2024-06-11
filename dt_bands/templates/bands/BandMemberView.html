@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Band Member Management</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs" defer></script>
+</head>
+<body>
+    <div class="container" x-data="bandMemberApp()" x-init="init()">
+        <!-- Liste des membres du groupe -->
+        <template x-if="showList">
+            <div>
+                <h1>Band Members List</h1>
+                <ul>
+                    <template x-for="member in bandMembers" :key="member.id">
+                        <li @click="selectMember(member)">
+                            <strong x-text="member.band_member_first_name + ' ' + member.band_member_last_name"></strong>
+                        </li>
+                    </template>
+                </ul>
+                <button @click="showCreateForm()">Add New Member</button>
+            </div>
+        </template>
+
+        <!-- Détails du membre -->
+        <template x-if="showDetail">
+            <div>
+                <button @click="goBack()">Back to List</button>
+                <h1 x-text="selectedMember.band_member_first_name + ' ' + selectedMember.band_member_last_name"></h1>
+                <p>Birth City: <span x-text="selectedMember.band_member_birth_city"></span></p>
+                <p>Birth Country: <span x-text="selectedMember.band_member_birth_country"></span></p>
+                <p>Nationality: <span x-text="selectedMember.band_member_nationality"></span></p>
+                <p>Birth Year: <span x-text="selectedMember.band_member_birth_year"></span></p>
+                <p>Death Year: <span x-text="selectedMember.band_member_death_year"></span></p>
+                <p>Instruments: <span x-text="selectedMember.band_member_instruments.map(instrument => instrument.name).join(', ')"></span></p>
+                <img :src="selectedMember.band_member_photo" alt="Member Photo" x-show="selectedMember.band_member_photo">
+            </div>
+        </template>
+
+        <!-- Formulaire de création d'un nouveau membre -->
+        <template x-if="showCreate">
+            <div>
+                <h1>Create New Band Member</h1>
+                <form @submit.prevent="createMember">
+                    <div>
+                        <label for="first_name">First Name</label>
+                        <input type="text" id="first_name" x-model="newMember.band_member_first_name">
+                    </div>
+                    <div>
+                        <label for="last_name">Last Name</label>
+                        <input type="text" id="last_name" x-model="newMember.band_member_last_name">
+                    </div>
+                    <div>
+                        <label for="birth_city">Birth City</label>
+                        <input type="text" id="birth_city" x-model="newMember.band_member_birth_city">
+                    </div>
+                    <div>
+                        <label for="birth_country">Birth Country</label>
+                        <input type="text" id="birth_country" x-model="newMember.band_member_birth_country">
+                    </div>
+                    <div>
+                        <label for="nationality">Nationality</label>
+                        <input type="text" id="nationality" x-model="newMember.band_member_nationality">
+                    </div>
+                    <div>
+                        <label for="birth_year">Birth Year</label>
+                        <input type="number" id="birth_year" x-model="newMember.band_member_birth_year">
+                    </div>
+                    <div>
+                        <label for="death_year">Death Year</label>
+                        <input type="number" id="death_year" x-model="newMember.band_member_death_year">
+                    </div>
+                    <div>
+                        <label for="instruments">Instruments</label>
+                        <select id="instruments" x-model="newMember.band_member_instruments" multiple>
+                            <template x-for="instrument in instruments" :key="instrument.id">
+                                <option :value="instrument.id" x-text="instrument.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <button type="submit">Create</button>
+                </form>
+                <button @click="goBack()">Cancel</button>
+            </div>
+        </template>
+    </div>
+
+    <script>
+        function bandMemberApp() {
+            return {
+                bandMembers: [],
+                instruments: [],
+                selectedMember: null,
+                showList: true,
+                showDetail: false,
+                showCreate: false,
+                newMember: {
+                    band_member_first_name: '',
+                    band_member_last_name: '',
+                    band_member_birth_city: '',
+                    band_member_birth_country: '',
+                    band_member_nationality: '',
+                    band_member_birth_year: '',
+                    band_member_death_year: '',
+                    band_member_instruments: []
+                },
+                fetchBandMembers() {
+                    fetch('/api/bandmembers/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.bandMembers = data;
+                        });
+                },
+                fetchInstruments() {
+                    fetch('/api/instruments/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.instruments = data;
+                        });
+                },
+                selectMember(member) {
+                    this.selectedMember = member;
+                    this.showList = false;
+                    this.showDetail = true;
+                },
+                goBack() {
+                    this.showDetail = false;
+                    this.showCreate = false;
+                    this.showList = true;
+                },
+                showCreateForm() {
+                    this.showCreate = true;
+                    this.showList = false;
+                },
+                createMember() {
+                    fetch('/api/bandmembers/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(this.newMember)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        this.bandMembers.push(data);
+                        this.goBack();
+                    });
+                },
+                init() {
+                    this.fetchBandMembers();
+                    this.fetchInstruments();
+                }
+            }
+        }
+    </script>
+</body>
+</html>

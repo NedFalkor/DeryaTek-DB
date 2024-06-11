@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sub-Genre Management</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs" defer></script>
+</head>
+<body>
+    <div class="container" x-data="subGenreApp()" x-init="init()">
+        <!-- Liste des sous-genres -->
+        <template x-if="showList">
+            <div>
+                <h1>Sub-Genres List</h1>
+                <ul>
+                    <template x-for="subGenre in subGenres" :key="subGenre.id">
+                        <li @click="selectSubGenre(subGenre)">
+                            <strong x-text="subGenre.sub_genre_name"></strong>
+                        </li>
+                    </template>
+                </ul>
+                <button @click="showCreateForm()">Add New Sub-Genre</button>
+            </div>
+        </template>
+
+        <!-- Détails du sous-genre -->
+        <template x-if="showDetail">
+            <div>
+                <button @click="goBack()">Back to List</button>
+                <h1 x-text="selectedSubGenre.sub_genre_name"></h1>
+                <p>Description: <span x-text="selectedSubGenre.sub_genre_description"></span></p>
+                <p>Styles: <span x-text="selectedSubGenre.sub_genre_styles.map(s => s.style_name).join(', ')"></span></p>
+                <img :src="selectedSubGenre.sub_genre_photo" alt="Sub-Genre Photo" x-show="selectedSubGenre.sub_genre_photo">
+            </div>
+        </template>
+
+        <!-- Formulaire de création d'un nouveau sous-genre -->
+        <template x-if="showCreate">
+            <div>
+                <h1>Create New Sub-Genre</h1>
+                <form @submit.prevent="createSubGenre">
+                    <div>
+                        <label for="name">Name</label>
+                        <input type="text" id="name" x-model="newSubGenre.sub_genre_name">
+                    </div>
+                    <div>
+                        <label for="description">Description</label>
+                        <textarea id="description" x-model="newSubGenre.sub_genre_description"></textarea>
+                    </div>
+                    <div>
+                        <label for="styles">Styles</label>
+                        <select id="styles" x-model="newSubGenre.sub_genre_styles" multiple>
+                            <template x-for="style in styles" :key="style.id">
+                                <option :value="style.id" x-text="style.style_name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="photo">Photo</label>
+                        <input type="file" id="photo" @change="handleFileUpload">
+                    </div>
+                    <button type="submit">Create</button>
+                </form>
+                <button @click="goBack()">Cancel</button>
+            </div>
+        </template>
+    </div>
+
+    <script>
+        function subGenreApp() {
+            return {
+                subGenres: [],
+                styles: [],
+                selectedSubGenre: null,
+                showList: true,
+                showDetail: false,
+                showCreate: false,
+                newSubGenre: {
+                    sub_genre_name: '',
+                    sub_genre_description: '',
+                    sub_genre_styles: [],
+                    sub_genre_photo: null
+                },
+                fetchSubGenres() {
+                    fetch('/api/subgenres/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.subGenres = data;
+                        });
+                },
+                fetchStyles() {
+                    fetch('/api/styles/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.styles = data;
+                        });
+                },
+                selectSubGenre(subGenre) {
+                    this.selectedSubGenre = subGenre;
+                    this.showList = false;
+                    this.showDetail = true;
+                },
+                goBack() {
+                    this.showDetail = false;
+                    this.showCreate = false;
+                    this.showList = true;
+                },
+                showCreateForm() {
+                    this.showCreate = true;
+                    this.showList = false;
+                },
+                handleFileUpload(event) {
+                    this.newSubGenre.sub_genre_photo = event.target.files[0];
+                },
+                createSubGenre() {
+                    const formData = new FormData();
+                    formData.append('sub_genre_name', this.newSubGenre.sub_genre_name);
+                    formData.append('sub_genre_description', this.newSubGenre.sub_genre_description);
+                    this.newSubGenre.sub_genre_styles.forEach(style => formData.append('sub_genre_styles', style));
+                    if (this.newSubGenre.sub_genre_photo) {
+                        formData.append('sub_genre_photo', this.newSubGenre.sub_genre_photo);
+                    }
+
+                    fetch('/api/subgenres/', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        this.subGenres.push(data);
+                        this.goBack();
+                    });
+                },
+                init() {
+                    this.fetchSubGenres();
+                    this.fetchStyles();
+                }
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs" defer></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .card {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin: 10px;
+            padding: 20px;
+            flex: 1 1 calc(33.333% - 40px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .card h2 {
+            margin-top: 0;
+        }
+        .card button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        .card button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" x-data="dashboard()">
+        <div class="card" x-for="category in categories" :key="category.name">
+            <h2 x-text="category.name"></h2>
+            <div>
+                <template x-for="view in category.views" :key="view.name">
+                    <button @click="navigate(view.path)" x-text="view.name"></button>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function dashboard() {
+            return {
+                categories: [
+                    {
+                        name: 'Bands',
+                        views: [
+                            { name: 'Band Members', path: '/bands/BandMemberView.html' },
+                            { name: 'Bands', path: '/bands/BandView.html' },
+                            { name: 'Instruments', path: '/bands/InstrumentView.html' }
+                        ]
+                    },
+                    {
+                        name: 'Users',
+                        views: [
+                            { name: 'Custom Users', path: '/custom_user/CustomUserView.html' }
+                        ]
+                    },
+                    {
+                        name: 'Genres',
+                        views: [
+                            { name: 'Genres', path: '/genres/GenreView.html' },
+                            { name: 'Styles', path: '/genres/StyleView.html' },
+                            { name: 'Sub-Genres', path: '/genres/SubGenreView.html' }
+                        ]
+                    },
+                    {
+                        name: 'Gigs',
+                        views: [
+                            { name: 'Festivals', path: '/gigs/FestivalView.html' },
+                            { name: 'Gigs', path: '/gigs/GigView.html' },
+                            { name: 'Venues', path: '/gigs/VenueView.html' }
+                        ]
+                    },
+                    {
+                        name: 'Records',
+                        views: [
+                            { name: 'Labels', path: '/records/LabelView.html' },
+                            { name: 'Records', path: '/records/RecordView.html' }
+                        ]
+                    }
+                ],
+                navigate(path) {
+                    window.location.href = path;
+                }
+            };
+        }
+    </script>
+</body>
+</html>

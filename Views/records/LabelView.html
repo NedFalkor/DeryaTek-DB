@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Label Management</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs" defer></script>
+</head>
+<body>
+    <div class="container" x-data="labelApp()" x-init="init()">
+        <!-- Liste des labels -->
+        <template x-if="showList">
+            <div>
+                <h1>Labels List</h1>
+                <ul>
+                    <template x-for="label in labels" :key="label.id">
+                        <li @click="selectLabel(label)">
+                            <strong x-text="label.label_name"></strong>
+                        </li>
+                    </template>
+                </ul>
+                <button @click="showCreateForm()">Add New Label</button>
+            </div>
+        </template>
+
+        <!-- Détails du label -->
+        <template x-if="showDetail">
+            <div>
+                <button @click="goBack()">Back to List</button>
+                <h1 x-text="selectedLabel.label_name"></h1>
+                <p>Address: <span x-text="selectedLabel.label_address"></span></p>
+                <p>Country: <span x-text="selectedLabel.label_country"></span></p>
+                <p>Description: <span x-text="selectedLabel.label_description"></span></p>
+                <p>Founding Date: <span x-text="selectedLabel.label_founding_date"></span></p>
+                <p>Phone Number: <span x-text="selectedLabel.label_phone_number"></span></p>
+                <p>Postal Code: <span x-text="selectedLabel.label_postal_code"></span></p>
+                <p>Status: <span x-text="selectedLabel.label_status"></span></p>
+                <p>Genres: <span x-text="selectedLabel.label_genres.map(g => g.name).join(', ')"></span></p>
+                <p>Sub-Genres: <span x-text="selectedLabel.label_sub_genres.map(sg => sg.name).join(', ')"></span></p>
+                <p>Styles: <span x-text="selectedLabel.label_styles.map(s => s.name).join(', ')"></span></p>
+            </div>
+        </template>
+
+        <!-- Formulaire de création d'un nouveau label -->
+        <template x-if="showCreate">
+            <div>
+                <h1>Create New Label</h1>
+                <form @submit.prevent="createLabel">
+                    <div>
+                        <label for="name">Name</label>
+                        <input type="text" id="name" x-model="newLabel.label_name">
+                    </div>
+                    <div>
+                        <label for="address">Address</label>
+                        <input type="text" id="address" x-model="newLabel.label_address">
+                    </div>
+                    <div>
+                        <label for="country">Country</label>
+                        <input type="text" id="country" x-model="newLabel.label_country">
+                    </div>
+                    <div>
+                        <label for="description">Description</label>
+                        <textarea id="description" x-model="newLabel.label_description"></textarea>
+                    </div>
+                    <div>
+                        <label for="founding_date">Founding Date</label>
+                        <input type="date" id="founding_date" x-model="newLabel.label_founding_date">
+                    </div>
+                    <div>
+                        <label for="phone_number">Phone Number</label>
+                        <input type="text" id="phone_number" x-model="newLabel.label_phone_number">
+                    </div>
+                    <div>
+                        <label for="postal_code">Postal Code</label>
+                        <input type="text" id="postal_code" x-model="newLabel.label_postal_code">
+                    </div>
+                    <div>
+                        <label for="status">Status</label>
+                        <select id="status" x-model="newLabel.label_status">
+                            <option value="Actif">Actif</option>
+                            <option value="Inactif">Inactif</option>
+                            <option value="Temporairement indisponible">Temporairement indisponible</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="genres">Genres</label>
+                        <select id="genres" x-model="newLabel.label_genres" multiple>
+                            <template x-for="genre in genres" :key="genre.id">
+                                <option :value="genre.id" x-text="genre.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="sub_genres">Sub-Genres</label>
+                        <select id="sub_genres" x-model="newLabel.label_sub_genres" multiple>
+                            <template x-for="sub_genre in sub_genres" :key="sub_genre.id">
+                                <option :value="sub_genre.id" x-text="sub_genre.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="styles">Styles</label>
+                        <select id="styles" x-model="newLabel.label_styles" multiple>
+                            <template x-for="style in styles" :key="style.id">
+                                <option :value="style.id" x-text="style.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <button type="submit">Create</button>
+                </form>
+                <button @click="goBack()">Cancel</button>
+            </div>
+        </template>
+    </div>
+
+    <script>
+        function labelApp() {
+            return {
+                labels: [],
+                genres: [],
+                sub_genres: [],
+                styles: [],
+                selectedLabel: null,
+                showList: true,
+                showDetail: false,
+                showCreate: false,
+                newLabel: {
+                    label_name: '',
+                    label_address: '',
+                    label_country: '',
+                    label_description: '',
+                    label_founding_date: '',
+                    label_phone_number: '',
+                    label_postal_code: '',
+                    label_status: '',
+                    label_genres: [],
+                    label_sub_genres: [],
+                    label_styles: []
+                },
+                fetchLabels() {
+                    fetch('/api/labels/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.labels = data;
+                        });
+                },
+                fetchGenres() {
+                    fetch('/api/genres/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.genres = data;
+                        });
+                },
+                fetchSubGenres() {
+                    fetch('/api/subgenres/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.sub_genres = data;
+                        });
+                },
+                fetchStyles() {
+                    fetch('/api/styles/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.styles = data;
+                        });
+                },
+                selectLabel(label) {
+                    this.selectedLabel = label;
+                    this.showList = false;
+                    this.showDetail = true;
+                },
+                goBack() {
+                    this.showDetail = false;
+                    this.showCreate = false;
+                    this.showList = true;
+                },
+                showCreateForm() {
+                    this.showCreate = true;
+                    this.showList = false;
+                },
+                createLabel() {
+                    fetch('/api/labels/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(this.newLabel)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        this.labels.push(data);
+                        this.goBack();
+                    });
+                },
+                init() {
+                    this.fetchLabels();
+                    this.fetchGenres();
+                    this.fetchSubGenres();
+                    this.fetchStyles();
+                }
+            }
+        }
+    </script>
+</body>
+</html>

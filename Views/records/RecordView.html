@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Records Management</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs" defer></script>
+</head>
+<body>
+    <div class="container" x-data="recordApp()" x-init="init()">
+        <!-- Liste des enregistrements -->
+        <template x-if="showList">
+            <div>
+                <h1>Records List</h1>
+                <ul>
+                    <template x-for="record in records" :key="record.id">
+                        <li @click="selectRecord(record)">
+                            <strong x-text="record.record_title"></strong> by <span x-text="record.record_band.name"></span>
+                        </li>
+                    </template>
+                </ul>
+                <button @click="showCreateForm()">Add New Record</button>
+            </div>
+        </template>
+
+        <!-- Détails de l'enregistrement -->
+        <template x-if="showDetail">
+            <div>
+                <button @click="goBack()">Back to List</button>
+                <h1 x-text="selectedRecord.record_title"></h1>
+                <p>Band: <span x-text="selectedRecord.record_band.name"></span></p>
+                <p>Condition: <span x-text="selectedRecord.record_condition"></span></p>
+                <p>Format: <span x-text="selectedRecord.record_format"></span></p>
+                <p>Year: <span x-text="selectedRecord.record_year"></span></p>
+                <p>Type: <span x-text="selectedRecord.record_type"></span></p>
+                <p>Label: <span x-text="selectedRecord.record_label.name"></span></p>
+                <p>Genres: <span x-text="selectedRecord.record_genres.map(g => g.name).join(', ')"></span></p>
+                <p>Sub-Genres: <span x-text="selectedRecord.record_sub_genres.map(sg => sg.name).join(', ')"></span></p>
+                <p>Styles: <span x-text="selectedRecord.record_styles.map(s => s.name).join(', ')"></span></p>
+                <p>Tracklist: <span x-text="selectedRecord.record_tracklist"></span></p>
+                <p>Tracklist Side B: <span x-text="selectedRecord.record_tracklist_side_b"></span></p>
+            </div>
+        </template>
+
+        <!-- Formulaire de création d'un nouvel enregistrement -->
+        <template x-if="showCreate">
+            <div>
+                <h1>Create New Record</h1>
+                <form @submit.prevent="createRecord">
+                    <div>
+                        <label for="title">Title</label>
+                        <input type="text" id="title" x-model="newRecord.record_title">
+                    </div>
+                    <div>
+                        <label for="band">Band</label>
+                        <select id="band" x-model="newRecord.record_band">
+                            <template x-for="band in bands" :key="band.id">
+                                <option :value="band.id" x-text="band.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="condition">Condition</label>
+                        <select id="condition" x-model="newRecord.record_condition">
+                            <option value="New">Neuf</option>
+                            <option value="Used">Occasion</option>
+                            <option value="Damaged">Endommagé</option>
+                            <option value="Broken">Cassé</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="format">Format</label>
+                        <select id="format" x-model="newRecord.record_format">
+                            <option value="CD">CD</option>
+                            <option value="Vinyl">Vinyl</option>
+                            <option value="Audio Live Concert">Concert Audio</option>
+                            <option value="Video Live Concert">Concert Vidéo</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="year">Year</label>
+                        <input type="date" id="year" x-model="newRecord.record_year">
+                    </div>
+                    <div>
+                        <label for="type">Type</label>
+                        <select id="type" x-model="newRecord.record_type">
+                            <option value="Official">Officiel</option>
+                            <option value="Bootleg">Bootleg</option>
+                            <option value="Burned">CD Gravé</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="label">Label</label>
+                        <select id="label" x-model="newRecord.record_label">
+                            <template x-for="label in labels" :key="label.id">
+                                <option :value="label.id" x-text="label.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="genres">Genres</label>
+                        <select id="genres" x-model="newRecord.record_genres" multiple>
+                            <template x-for="genre in genres" :key="genre.id">
+                                <option :value="genre.id" x-text="genre.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="sub_genres">Sub-Genres</label>
+                        <select id="sub_genres" x-model="newRecord.record_sub_genres" multiple>
+                            <template x-for="sub_genre in sub_genres" :key="sub_genre.id">
+                                <option :value="sub_genre.id" x-text="sub_genre.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="styles">Styles</label>
+                        <select id="styles" x-model="newRecord.record_styles" multiple>
+                            <template x-for="style in styles" :key="style.id">
+                                <option :value="style.id" x-text="style.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="tracklist">Tracklist</label>
+                        <textarea id="tracklist" x-model="newRecord.record_tracklist"></textarea>
+                    </div>
+                    <div>
+                        <label for="tracklist_side_b">Tracklist Side B</label>
+                        <textarea id="tracklist_side_b" x-model="newRecord.record_tracklist_side_b"></textarea>
+                    </div>
+                    <div>
+                        <label for="band_members">Band Members</label>
+                        <select id="band_members" x-model="newRecord.record_band_members" multiple>
+                            <template x-for="member in band_members" :key="member.id">
+                                <option :value="member.id" x-text="member.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <button type="submit">Create</button>
+                </form>
+                <button @click="goBack()">Cancel</button>
+            </div>
+        </template>
+    </div>
+
+    <script>
+        function recordApp() {
+            return {
+                records: [],
+                bands: [],
+                labels: [],
+                genres: [],
+                sub_genres: [],
+                styles: [],
+                band_members: [],
+                selectedRecord: null,
+                showList: true,
+                showDetail: false,
+                showCreate: false,
+                newRecord: {
+                    record_title: '',
+                    record_band: '',
+                    record_condition: 'New',
+                    record_format: 'CD',
+                    record_year: '',
+                    record_type: 'Official',
+                    record_label: '',
+                    record_genres: [],
+                    record_sub_genres: [],
+                    record_styles: [],
+                    record_tracklist: '',
+                    record_tracklist_side_b: '',
+                    record_band_members: []
+                },
+                fetchRecords() {
+                    fetch('/api/records/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.records = data;
+                        });
+                },
+                fetchBands() {
+                    fetch('/api/bands/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.bands = data;
+                        });
+                },
+                fetchLabels() {
+                    fetch('/api/labels/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.labels = data;
+                        });
+                },
+                fetchGenres() {
+                    fetch('/api/genres/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.genres = data;
+                        });
+                },
+                fetchSubGenres() {
+                    fetch('/api/subgenres/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.sub_genres = data;
+                        });
+                },
+                fetchStyles() {
+                    fetch('/api/styles/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.styles = data;
+                        });
+                },
+                fetchBandMembers() {
+                    fetch('/api/bandmembers/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.band_members = data;
+                        });
+                },
+                selectRecord(record) {
+                    this.selectedRecord = record;
+                    this.showList = false;
+                    this.showDetail = true;
+                },
+                goBack() {
+                    this.showDetail = false;
+                    this.showCreate = false;
+                    this.showList = true;
+                },
+                showCreateForm() {
+                    this.showCreate = true;
+                    this.showList = false;
+                },
+                createRecord() {
+                    fetch('/api/records/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(this.newRecord)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        this.records.push(data);
+                        this.goBack();
+                    });
+                },
+                init() {
+                    this.fetchRecords();
+                    this.fetchBands();
+                    this.fetchLabels();
+                    this.fetchGenres();
+                    this.fetchSubGenres();
+                    this.fetchStyles();
+                    this.fetchBandMembers();
+                }
+            }
+        }
+    </script>
+</body>
+</html>

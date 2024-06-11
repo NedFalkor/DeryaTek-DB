@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Band Management</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs" defer></script>
+</head>
+<body>
+    <div class="container" x-data="bandApp()" x-init="init()">
+        <!-- Liste des groupes -->
+        <template x-if="showList">
+            <div>
+                <h1>Bands List</h1>
+                <ul>
+                    <template x-for="band in bands" :key="band.id">
+                        <li @click="selectBand(band)">
+                            <strong x-text="band.band_name"></strong>
+                        </li>
+                    </template>
+                </ul>
+                <button @click="showCreateForm()">Add New Band</button>
+            </div>
+        </template>
+
+        <!-- Détails du groupe -->
+        <template x-if="showDetail">
+            <div>
+                <button @click="goBack()">Back to List</button>
+                <h1 x-text="selectedBand.band_name"></h1>
+                <p>Country: <span x-text="selectedBand.band_country"></span></p>
+                <p>Formed In: <span x-text="selectedBand.band_formed_in"></span></p>
+                <p>Description: <span x-text="selectedBand.band_description"></span></p>
+                <p>Genre: <span x-text="selectedBand.band_genre.name"></span></p>
+                <p>Status: <span x-text="selectedBand.band_status"></span></p>
+                <p>Separation Date: <span x-text="selectedBand.band_separation_date"></span></p>
+                <p>Members: <span x-text="selectedBand.band_members.map(member => member.name).join(', ')"></span></p>
+                <img :src="selectedBand.band_photo" alt="Band Photo" x-show="selectedBand.band_photo">
+            </div>
+        </template>
+
+        <!-- Formulaire de création d'un nouveau groupe -->
+        <template x-if="showCreate">
+            <div>
+                <h1>Create New Band</h1>
+                <form @submit.prevent="createBand">
+                    <div>
+                        <label for="name">Name</label>
+                        <input type="text" id="name" x-model="newBand.band_name">
+                    </div>
+                    <div>
+                        <label for="country">Country</label>
+                        <input type="text" id="country" x-model="newBand.band_country">
+                    </div>
+                    <div>
+                        <label for="formed_in">Formed In</label>
+                        <input type="number" id="formed_in" x-model="newBand.band_formed_in">
+                    </div>
+                    <div>
+                        <label for="description">Description</label>
+                        <textarea id="description" x-model="newBand.band_description"></textarea>
+                    </div>
+                    <div>
+                        <label for="genre">Genre</label>
+                        <select id="genre" x-model="newBand.band_genre">
+                            <template x-for="genre in genres" :key="genre.id">
+                                <option :value="genre.id" x-text="genre.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="status">Status</label>
+                        <select id="status" x-model="newBand.band_status">
+                            <option value="active">Active</option>
+                            <option value="hiatus">On Hiatus</option>
+                            <option value="split_up">Split Up</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="separation_date">Separation Date</label>
+                        <input type="date" id="separation_date" x-model="newBand.band_separation_date">
+                    </div>
+                    <div>
+                        <label for="members">Members</label>
+                        <select id="members" x-model="newBand.band_members" multiple>
+                            <template x-for="member in band_members" :key="member.id">
+                                <option :value="member.id" x-text="member.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <button type="submit">Create</button>
+                </form>
+                <button @click="goBack()">Cancel</button>
+            </div>
+        </template>
+    </div>
+
+    <script>
+        function bandApp() {
+            return {
+                bands: [],
+                genres: [],
+                band_members: [],
+                selectedBand: null,
+                showList: true,
+                showDetail: false,
+                showCreate: false,
+                newBand: {
+                    band_name: '',
+                    band_country: '',
+                    band_formed_in: '',
+                    band_description: '',
+                    band_genre: '',
+                    band_status: 'active',
+                    band_separation_date: '',
+                    band_members: []
+                },
+                fetchBands() {
+                    fetch('/api/bands/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.bands = data;
+                        });
+                },
+                fetchGenres() {
+                    fetch('/api/genres/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.genres = data;
+                        });
+                },
+                fetchBandMembers() {
+                    fetch('/api/bandmembers/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.band_members = data;
+                        });
+                },
+                selectBand(band) {
+                    this.selectedBand = band;
+                    this.showList = false;
+                    this.showDetail = true;
+                },
+                goBack() {
+                    this.showDetail = false;
+                    this.showCreate = false;
+                    this.showList = true;
+                },
+                showCreateForm() {
+                    this.showCreate = true;
+                    this.showList = false;
+                },
+                createBand() {
+                    fetch('/api/bands/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(this.newBand)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        this.bands.push(data);
+                        this.goBack();
+                    });
+                },
+                init() {
+                    this.fetchBands();
+                    this.fetchGenres();
+                    this.fetchBandMembers();
+                }
+            }
+        }
+    </script>
+</body>
+</html>

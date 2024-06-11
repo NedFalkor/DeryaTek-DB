@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs" defer></script>
+</head>
+<body>
+    <div class="container" x-data="userApp()" x-init="init()">
+        <!-- Liste des utilisateurs -->
+        <template x-if="showList">
+            <div>
+                <h1>Users List</h1>
+                <ul>
+                    <template x-for="user in users" :key="user.id">
+                        <li @click="selectUser(user)">
+                            <strong x-text="user.username"></strong> (<span x-text="user.email"></span>)
+                        </li>
+                    </template>
+                </ul>
+                <button @click="showCreateForm()">Add New User</button>
+            </div>
+        </template>
+
+        <!-- Détails de l'utilisateur -->
+        <template x-if="showDetail">
+            <div>
+                <button @click="goBack()">Back to List</button>
+                <h1 x-text="selectedUser.username"></h1>
+                <p>Email: <span x-text="selectedUser.email"></span></p>
+                <p>Groups: <span x-text="selectedUser.groups.map(g => g.name).join(', ')"></span></p>
+                <p>Permissions: <span x-text="selectedUser.user_permissions.map(p => p.name).join(', ')"></span></p>
+            </div>
+        </template>
+
+        <!-- Formulaire de création d'un nouvel utilisateur -->
+        <template x-if="showCreate">
+            <div>
+                <h1>Create New User</h1>
+                <form @submit.prevent="createUser">
+                    <div>
+                        <label for="username">Username</label>
+                        <input type="text" id="username" x-model="newUser.username">
+                    </div>
+                    <div>
+                        <label for="email">Email</label>
+                        <input type="email" id="email" x-model="newUser.email">
+                    </div>
+                    <div>
+                        <label for="password">Password</label>
+                        <input type="password" id="password" x-model="newUser.password">
+                    </div>
+                    <button type="submit">Create</button>
+                </form>
+                <button @click="goBack()">Cancel</button>
+            </div>
+        </template>
+    </div>
+
+    <script>
+        function userApp() {
+            return {
+                users: [],
+                selectedUser: null,
+                showList: true,
+                showDetail: false,
+                showCreate: false,
+                newUser: {
+                    username: '',
+                    email: '',
+                    password: ''
+                },
+                fetchUsers() {
+                    fetch('/api/users/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.users = data;
+                        });
+                },
+                selectUser(user) {
+                    this.selectedUser = user;
+                    this.showList = false;
+                    this.showDetail = true;
+                },
+                goBack() {
+                    this.showDetail = false;
+                    this.showCreate = false;
+                    this.showList = true;
+                },
+                showCreateForm() {
+                    this.showCreate = true;
+                    this.showList = false;
+                },
+                createUser() {
+                    const userData = {
+                        username: this.newUser.username,
+                        email: this.newUser.email,
+                        password: this.newUser.password
+                    };
+
+                    fetch('/api/users/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(userData)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        this.users.push(data);
+                        this.goBack();
+                    });
+                },
+                init() {
+                    this.fetchUsers();
+                }
+            }
+        }
+    </script>
+</body>
+</html>

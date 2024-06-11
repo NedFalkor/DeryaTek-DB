@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Festival Management</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs" defer></script>
+</head>
+<body>
+    <div class="container" x-data="festivalApp()" x-init="init()">
+        <!-- Liste des festivals -->
+        <template x-if="showList">
+            <div>
+                <h1>Festivals List</h1>
+                <ul>
+                    <template x-for="festival in festivals" :key="festival.id">
+                        <li @click="selectFestival(festival)">
+                            <strong x-text="festival.festival_name"></strong> (<span x-text="festival.festival_start_date"></span> - <span x-text="festival.festival_end_date"></span>)
+                        </li>
+                    </template>
+                </ul>
+                <button @click="showCreateForm()">Add New Festival</button>
+            </div>
+        </template>
+
+        <!-- Détails du festival -->
+        <template x-if="showDetail">
+            <div>
+                <button @click="goBack()">Back to List</button>
+                <h1 x-text="selectedFestival.festival_name"></h1>
+                <p>Start Date: <span x-text="selectedFestival.festival_start_date"></span></p>
+                <p>End Date: <span x-text="selectedFestival.festival_end_date"></span></p>
+                <p>Description: <span x-text="selectedFestival.festival_description"></span></p>
+                <p>Link: <a :href="selectedFestival.festival_link" x-text="selectedFestival.festival_link" target="_blank"></a></p>
+                <p>Ticket Price: $<span x-text="selectedFestival.festival_ticket_price"></span></p>
+                <p>Venues: <span x-text="selectedFestival.venues.map(venue => venue.venue_name).join(', ')"></span></p>
+                <p>Bands: <span x-text="selectedFestival.bands.map(band => band.band_name).join(', ')"></span></p>
+            </div>
+        </template>
+
+        <!-- Formulaire de création d'un nouveau festival -->
+        <template x-if="showCreate">
+            <div>
+                <h1>Create New Festival</h1>
+                <form @submit.prevent="createFestival">
+                    <div>
+                        <label for="name">Name</label>
+                        <input type="text" id="name" x-model="newFestival.festival_name">
+                    </div>
+                    <div>
+                        <label for="start_date">Start Date</label>
+                        <input type="date" id="start_date" x-model="newFestival.festival_start_date">
+                    </div>
+                    <div>
+                        <label for="end_date">End Date</label>
+                        <input type="date" id="end_date" x-model="newFestival.festival_end_date">
+                    </div>
+                    <div>
+                        <label for="description">Description</label>
+                        <textarea id="description" x-model="newFestival.festival_description"></textarea>
+                    </div>
+                    <div>
+                        <label for="link">Link</label>
+                        <input type="url" id="link" x-model="newFestival.festival_link">
+                    </div>
+                    <div>
+                        <label for="ticket_price">Ticket Price</label>
+                        <input type="number" step="0.01" id="ticket_price" x-model="newFestival.festival_ticket_price">
+                    </div>
+                    <div>
+                        <label for="venues">Venues</label>
+                        <select id="venues" x-model="newFestival.venues" multiple>
+                            <template x-for="venue in venues" :key="venue.id">
+                                <option :value="venue.id" x-text="venue.venue_name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="bands">Bands</label>
+                        <select id="bands" x-model="newFestival.bands" multiple>
+                            <template x-for="band in bands" :key="band.id">
+                                <option :value="band.id" x-text="band.band_name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <button type="submit">Create</button>
+                </form>
+                <button @click="goBack()">Cancel</button>
+            </div>
+        </template>
+    </div>
+
+    <script>
+        function festivalApp() {
+            return {
+                festivals: [],
+                venues: [],
+                bands: [],
+                selectedFestival: null,
+                showList: true,
+                showDetail: false,
+                showCreate: false,
+                newFestival: {
+                    festival_name: '',
+                    festival_start_date: '',
+                    festival_end_date: '',
+                    festival_description: '',
+                    festival_link: '',
+                    festival_ticket_price: '',
+                    venues: [],
+                    bands: []
+                },
+                fetchFestivals() {
+                    fetch('/api/festivals/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.festivals = data;
+                        });
+                },
+                fetchVenues() {
+                    fetch('/api/venues/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.venues = data;
+                        });
+                },
+                fetchBands() {
+                    fetch('/api/bands/')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.bands = data;
+                        });
+                },
+                selectFestival(festival) {
+                    this.selectedFestival = festival;
+                    this.showList = false;
+                    this.showDetail = true;
+                },
+                goBack() {
+                    this.showDetail = false;
+                    this.showCreate = false;
+                    this.showList = true;
+                },
+                showCreateForm() {
+                    this.showCreate = true;
+                    this.showList = false;
+                },
+                createFestival() {
+                    const formData = new FormData();
+                    formData.append('festival_name', this.newFestival.festival_name);
+                    formData.append('festival_start_date', this.newFestival.festival_start_date);
+                    formData.append('festival_end_date', this.newFestival.festival_end_date);
+                    formData.append('festival_description', this.newFestival.festival_description);
+                    formData.append('festival_link', this.newFestival.festival_link);
+                    formData.append('festival_ticket_price', this.newFestival.festival_ticket_price);
+                    this.newFestival.venues.forEach(venue => formData.append('venues', venue));
+                    this.newFestival.bands.forEach(band => formData.append('bands', band));
+
+                    fetch('/api/festivals/', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        this.festivals.push(data);
+                        this.goBack();
+                    });
+                },
+                init() {
+                    this.fetchFestivals();
+                    this.fetchVenues();
+                    this.fetchBands();
+                }
+            }
+        }
+    </script>
+</body>
+</html>
